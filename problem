@@ -1,0 +1,100 @@
+#include <iostream>
+#include <vector>
+#include <iomanip>
+using namespace std;
+
+// Constants
+const int ROWS = 12; // 11 rows with 7 seats and 1 row with 3 seats
+const int SEATS_IN_ROW = 7;
+
+// Function to display the current seating arrangement
+void displaySeats(const vector<vector<bool>> &seats) {
+    cout << "Current Seat Status (1 = Booked, 0 = Available):\n";
+    for (size_t i = 0; i < seats.size(); i++) {
+        cout << "Row " << setw(2) << i + 1 << ": ";
+        for (size_t j = 0; j < seats[i].size(); j++) {
+            cout << seats[i][j] << " ";
+        }
+        cout << endl;
+    }
+}
+
+// Function to book seats
+vector<pair<int, int>> bookSeats(vector<vector<bool>> &seats, int numSeats) {
+    vector<pair<int, int>> bookedSeats;
+
+    // First, try to find a row with enough contiguous seats
+    for (size_t i = 0; i < seats.size(); i++) {
+        int count = 0;
+        for (size_t j = 0; j < seats[i].size(); j++) {
+            if (!seats[i][j]) count++;
+            else count = 0;
+
+            if (count == numSeats) {
+                // Book seats in this row
+                for (int k = 0; k < numSeats; k++) {
+                    seats[i][j - k] = true;
+                    bookedSeats.emplace_back(i + 1, j - k + 1);
+                }
+                return bookedSeats;
+            }
+        }
+    }
+
+    // If no single row has enough seats, book seats nearby
+    for (size_t i = 0; i < seats.size() && numSeats > 0; i++) {
+        for (size_t j = 0; j < seats[i].size() && numSeats > 0; j++) {
+            if (!seats[i][j]) {
+                seats[i][j] = true;
+                bookedSeats.emplace_back(i + 1, j + 1);
+                numSeats--;
+            }
+        }
+    }
+
+    return bookedSeats;
+}
+
+int main() {
+    // Initialize the seating arrangement
+    vector<vector<bool>> seats(ROWS, vector<bool>(SEATS_IN_ROW, false));
+    seats.back().resize(3); // Last row has only 3 seats
+
+    // Pre-booked seats (assumption)
+    seats[0][1] = seats[0][2] = true; // Example pre-booked seats
+    seats[4][0] = seats[4][1] = seats[4][2] = true;
+
+    cout << "Welcome to the Train Seat Reservation System!\n";
+
+    while (true) {
+        displaySeats(seats);
+
+        int numSeats;
+        cout << "Enter the number of seats to book (or -1 to exit): ";
+        cin >> numSeats;
+
+        if (numSeats == -1) {
+            cout << "Exiting. Thank you for using the system.\n";
+            break;
+        }
+
+        if (numSeats < 1 || numSeats > 7) {
+            cout << "You can reserve between 1 and 7 seats at a time. Please try again.\n";
+            continue;
+        }
+
+        vector<pair<int, int>> bookedSeats = bookSeats(seats, numSeats);
+
+        if (bookedSeats.empty()) {
+            cout << "Sorry, not enough seats are available to fulfill your request.\n";
+        } else {
+            cout << "Seats booked successfully! Seat numbers: ";
+            for (const auto &seat : bookedSeats) {
+                cout << "[Row " << seat.first << ", Seat " << seat.second << "] ";
+            }
+            cout << endl;
+        }
+    }
+
+    return 0;
+}
